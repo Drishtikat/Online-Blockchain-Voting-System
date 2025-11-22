@@ -74,17 +74,17 @@ The system combines:
 
 ## 💻 Installation & Setup
 
-### 1 Clone Repository
+### 1. Clone Repository
 Clone repository using repository link
 
-### 2 Install Dependencies
+### 2. Install Dependencies
 ```npm install```
 
-### 3 Deploy Smart Contract
+### 3. Deploy Smart Contract
 ```npx hardhat run scripts/deploy.js --network localhost```
 
-### 4 Start Backend Server
+### 4. Start Backend Server
 ```node server.js```
 
-### 5 Run MATLAB Voting Simulator
+### 5. Run MATLAB Voting Simulator
 ``` HardwareSimulator```

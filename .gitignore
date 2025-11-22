@@ -1,0 +1,26 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Hardhat artifacts
+backend/hardhat/artifacts/
+backend/hardhat/cache/
+
+# ENV secrets (IMPORTANT)
+.env
+*.env
+
+# MATLAB junk + logs
+matlab/vvpat_logs/
+*.asv
+*.m~
+*.mat
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/

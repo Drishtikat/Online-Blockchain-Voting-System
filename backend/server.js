@@ -75,12 +75,17 @@ app.get("/getResults", async (req, res) => {
     let result = {};
     for (let i = 1; i <= 5; i++) {
       const data = await voting.getCandidate(i);
-      result[i] = { name: data[0], voteCount: Number(data[1]) };
+      result[String(i)] = { 
+        name: data[0], 
+        voteCount: Number(data[1]) 
+      };
     }
+
+    res.setHeader("Content-Type", "application/json");
     res.json(result);
+
   } catch (err) {
+    console.log("RESULT ERROR:", err);
     res.status(500).json({ success: false, message: "Unable to fetch results" });
   }
 });
-
-app.listen(4000, () => console.log("Backend server running on port 4000"));

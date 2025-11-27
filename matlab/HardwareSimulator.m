@@ -1,111 +1,188 @@
 function HardwareSimulator
 
-    fig = uifigure('Name', 'Electronic Voting Machine', 'Position', [100 100 800 600]);
-    gl = uigridlayout(fig, [3, 1], 'RowHeight', {'fit','fit','1x'}, 'Padding', 10);
+    %% ============================================================
+    %  BASE UI CONFIG
+    %% ============================================================
+    fig = uifigure('Name', 'Electronic Voting Machine', ...
+        'Position', [200 100 900 650], ...
+        'Color', [0.97 0.97 0.97]);
+
+    gl = uigridlayout(fig, [3, 1], ...
+        'RowHeight', {'fit','fit','1x'}, ...
+        'Padding', [15 15 15 15], ...
+        'RowSpacing', 15);
+
+
+    %% ============================================================
+    %  UNIVERSAL STYLES
+    %% ============================================================
+    titleFont  = 16;
+    labelFont  = 13;
+    buttonFont = 13;
+    panelColor = [1 1 1]; %color of panels - white
+
+    btnStyle = @(b) set(b, ...
+        "FontSize",buttonFont, ...
+        "FontWeight","bold", ...
+        "BackgroundColor",[0.15 0.45 0.85], ...
+        "FontColor","white");
+
 
     %% ============================================================
     %  PUF PANEL
     %% ============================================================
-    pufPanel = uipanel(gl, 'Title', 'PUF Verification', 'FontWeight','bold');
-    g1 = uigridlayout(pufPanel,[1,3]);
+    pufPanel = uipanel(gl, ...
+        'Title', '   PUF Verification', ...
+        'FontSize', titleFont, ...
+        'FontWeight','bold', ...
+        'BackgroundColor', panelColor, ...
+        'BorderType','line');
 
-    uilabel(g1,"Text","Device ID:");
-    devField = uieditfield(g1,"text","Value","BU001");
-    uibutton(g1,"Text","Verify Device",...
+    g1 = uigridlayout(pufPanel,[1 3], ...
+        'ColumnSpacing',10, ...
+        'Padding',10);
+
+    uilabel(g1, "Text","Device ID:", ...
+        "FontSize",labelFont, "HorizontalAlignment","right");
+
+    devField = uieditfield(g1, "text", ...
+        "Value","BU001", "FontSize",labelFont);
+
+    btnPUF = uibutton(g1, "Text","Verify Device", ...
+        "FontSize",buttonFont, ...
         "ButtonPushedFcn", @(btn,event) verifyDevice(devField.Value));
+    btnStyle(btnPUF);
+
 
     %% ============================================================
     %  BIOMETRIC PANEL
     %% ============================================================
-    bioPanel = uipanel(gl, 'Title', 'Biometric Verification', 'FontWeight','bold');
-    g2 = uigridlayout(bioPanel,[2,3]);
+    bioPanel = uipanel(gl, ...
+        'Title', '   Biometric Verification', ...
+        'FontSize', titleFont, ...
+        'FontWeight','bold', ...
+        'BackgroundColor', panelColor);
 
-    uilabel(g2,"Text","Voter ID:");
-    voterField = uieditfield(g2,"text");
-    fpStatus = uilabel(g2,"Text","","FontColor",[0 0.5 0]);
+    g2 = uigridlayout(bioPanel,[2 3], ...
+        'ColumnSpacing',10, ...
+        'RowSpacing',8, ...
+        'Padding',10);
 
-    uilabel(g2,"Text","Fingerprint Key:");
-    fpField = uieditfield(g2,"text");
-    btnVerifyVoter = uibutton(g2,"Text","Verify Voter", ...
-        "ButtonPushedFcn",@(btn,event) verifyVoter());
+    uilabel(g2,"Text","Voter ID:", ...
+        "FontSize",labelFont,"HorizontalAlignment","right");
+    voterField = uieditfield(g2,"text", "FontSize",labelFont);
 
+    fpStatus = uilabel(g2,"Text","", ...
+        "FontSize",labelFont, ...
+        "FontColor",[0 0.4 0], ...
+        "HorizontalAlignment","center");
     fpStatus.Layout.Column = 3;
+
+    uilabel(g2,"Text","Fingerprint Key:", ...
+        "FontSize",labelFont,"HorizontalAlignment","right");
+    fpField = uieditfield(g2,"text", "FontSize",labelFont);
+
+    btnVerifyVoter = uibutton(g2,"Text","Verify Voter", ...
+        "ButtonPushedFcn",@(btn,event) verifyVoter(), ...
+        "FontSize",buttonFont);
+    btnStyle(btnVerifyVoter);
+
 
     %% ============================================================
     %  BALLOT PANEL
     %% ============================================================
-    ballotPanel = uipanel(gl, 'Title', 'Ballot Unit + VVPAT', 'FontWeight','bold');
-    g3 = uigridlayout(ballotPanel,[3,2],'RowHeight',{'fit','fit','1x'});
+    ballotPanel = uipanel(gl, ...
+        'Title', '   Ballot + VVPAT Unit', ...
+        'FontSize', titleFont, ...
+        'FontWeight', 'bold', ...
+        'BackgroundColor', panelColor);
 
-    uilabel(g3,"Text","Select Candidate:");
-    candDrop = uidropdown(g3,"Items",{'BJP','INC','AAP','OTH','BSP'},"Value","BJP");
+    g3 = uigridlayout(ballotPanel,[3 2], ...
+        'RowHeight', {'fit','fit','1x'}, ...
+        'ColumnSpacing',12, ...
+        'Padding',10);
 
-    btnVote = uibutton(g3,"Text","Vote","Enable","off", ...
-        "ButtonPushedFcn",@(btn,event) castVote());
+    uilabel(g3, "Text","Select Candidate:", ...
+        "FontSize",labelFont);
+    candDrop = uidropdown(g3, ...
+        "Items", {'BJP','INC','AAP','OTH','BSP'}, ...
+        "Value", "BJP", ...
+        "FontSize",labelFont);
 
-    uibutton(g3,"Text","Fetch Results",...
-        "ButtonPushedFcn",@(btn,event) fetchResults());
+    btnVote = uibutton(g3, "Text","Cast Vote", ...
+        "Enable","off", ...
+        "FontSize",buttonFont, ...
+        "ButtonPushedFcn", @(btn,event) castVote());
+    btnStyle(btnVote);
 
-    vvpat = uitextarea(g3,'Editable','off','Value',{'VVPAT Display:'});
+    btnResults = uibutton(g3, "Text","Fetch Results", ...
+        "FontSize",buttonFont, ...
+        "ButtonPushedFcn", @(btn,event) fetchResults());
+    btnStyle(btnResults);
 
-    %% Simulated DB
+    vvpat = uitextarea(g3, ...
+        'Editable','off', ...
+        'FontSize',12, ...
+        'Value',{'VVPAT Output:'});
+
+
+    %% ============================================================
+    %  SIMULATED DATABASE
+    %% ============================================================
     voterDB = struct('V1001','1','V1002','2','V1003','3','V1004','4','V1005','5');
 
-    %% ============================================================
-    %  CALLBACKS
-    %% ============================================================
 
+    %% ============================================================
+    %  CALLBACKS 
+    %% ============================================================
+    
     % ---------- Verify PUF ----------
     function verifyDevice(deviceId)
         try
-            data = struct('deviceId', deviceId);
-
-            resp = webwrite('http://localhost:4000/verifyPUF', data);
+            resp = webwrite('http://localhost:4000/verifyPUF', struct('deviceId',deviceId));
 
             if isfield(resp,'verified') && resp.verified
-                uialert(fig, 'Device Verified!', 'Success');
+                uialert(fig, 'Device Verified', 'Success');
             else
-                uialert(fig,'Device Not Verified!','Error');
+                uialert(fig, 'Device Not Verified', 'Error');
             end
 
-        catch ME
-            uialert(fig,"Cannot reach server!","Network Error");
-            disp(ME.message);
+        catch
+            uialert(fig, "Cannot reach server", "Network Error");
         end
     end
 
-    % -------- Verify Voter --------
+    % ---------- Verify Voter ----------
     function verifyVoter()
         voterId = upper(strtrim(voterField.Value));
-        fp = strtrim(fpField.Value);
+        fp      = strtrim(fpField.Value);
         btnVote.Enable = 'off';
 
         if isfield(voterDB, voterId)
             if strcmp(voterDB.(voterId), fp)
-                fpStatus.Text = ['✔ Voter Verified: ', voterId];
+                fpStatus.Text = ['Authentication Successful: ', voterId];
                 fpStatus.FontColor = [0 0.5 0];
                 btnVote.Enable = 'on';
             else
-                fpStatus.Text = '❌ Fingerprint mismatch';
+                fpStatus.Text = 'Fingerprint mismatch';
                 fpStatus.FontColor = [0.8 0 0];
             end
         else
-            fpStatus.Text = ['❌ Unknown ID: ', voterId];
+            fpStatus.Text = ['Unknown ID: ', voterId];
             fpStatus.FontColor = [0.8 0 0];
         end
     end
 
-    % -------- Cast Vote --------
+    % ---------- Cast Vote ----------
     function castVote()
         voterId = upper(strtrim(voterField.Value));
         candidate = candDrop.Value;
 
-        % Prepare JSON
-        data.voterId = voterId;
+        data.voterId     = voterId;
         data.candidateId = candidate;
-        data.timestamp = char(datetime('now'));
-        data.hashVoter = matlab.net.base64encode(voterId);
-        data.hashCand = matlab.net.base64encode(candidate);
+        data.timestamp   = char(datetime('now'));
+        data.hashVoter   = matlab.net.base64encode(voterId);
+        data.hashCand    = matlab.net.base64encode(candidate);
 
         try
             options = weboptions('MediaType','application/json', ...
@@ -115,64 +192,49 @@ function HardwareSimulator
 
             resp = webwrite('http://localhost:4000/recordVote', data, options);
 
-            if isstruct(resp)
-                if isfield(resp,"success") && resp.success
-                    disp("Vote recorded successfully");
-                else
-                    disp("Unexpected JSON response:");
-                    disp(resp);
-                end
-            else
-                disp("Backend returned raw text:");
-                disp(resp);
-            end
-
-
-            % Logging
-            if ~exist('vvpat_logs','dir')
-                mkdir('vvpat_logs');
-            end
-
+            % update UI
             slip = sprintf("Voter: %s\nCandidate: %s\nTime: %s\n", ...
                 data.hashVoter, data.hashCand, data.timestamp);
 
+            if ~exist('vvpat_logs','dir'), mkdir('vvpat_logs'); end
             writelines(slip,'vvpat_logs/vvpat_log.txt','WriteMode','append');
-            vvpat.Value = [vvpat.Value; "----"; slip];
 
-            fpStatus.Text = '✔ Vote Recorded!';
+            vvpat.Value = [vvpat.Value; "----"; slip];
+            fpStatus.Text = 'Vote Recorded';
             fpStatus.FontColor = [0 0.5 0];
             btnVote.Enable = 'off';
 
             uialert(fig, slip, 'VVPAT');
 
-        catch ME
-            uialert(fig,'Could not send vote to server','Network Error');
-            disp(ME.message);
+        catch
+            uialert(fig, 'Could not send vote to server', 'Network Error');
         end
     end
 
-    % -------- Fetch Results --------
+    % ---------- Fetch Results ----------
     function fetchResults()
-        try
-            resp = webread('http://localhost:4000/getResults');
-            disp(resp);
+    try
+        opts = weboptions('Timeout', 10, ...
+                          'ContentType', 'json', ...
+                          'CertificateFilename','');
 
-            out = "Election Results:";
-            keys = {'BJP','INC','AAP','OTH','BSP'};
+        resp = webread('http://localhost:4000/getResults', opts);
 
-            for i = 1:5
-                cName = resp.(sprintf('%d',i)).name;
-                count = resp.(sprintf('%d',i)).voteCount;
-                out = [out; sprintf("%s: %d votes", cName, count)];
-            end
+        fields = fieldnames(resp);   % x1, x2, x3, x4, x5
+        out = "Election Results:";
 
-            vvpat.Value = [vvpat.Value; "==== RESULTS ===="; out];
-
-        catch ME
-            uialert(fig,'Cannot fetch results','Error');
-            disp(ME.message);
+        for i = 1:numel(fields)
+            key = fields{i};
+            cName = resp.(key).name;
+            count = resp.(key).voteCount;
+            out = [out; sprintf("%s: %d votes", cName, count)];
         end
+
+        vvpat.Value = [vvpat.Value; "----- RESULTS -----"; out];
+
+    catch ME
+        uialert(fig, sprintf("MATLAB ERROR:\n%s", ME.message), "Error");
     end
+end
 
 end
-% End of HardwareSimulator.m

@@ -75,9 +75,12 @@ app.get("/getResults", async (req, res) => {
     let result = {};
     for (let i = 1; i <= 5; i++) {
       const data = await voting.getCandidate(i);
+      const hashes = await voting.getCandidateVoters(i);
+
       result[String(i)] = { 
         name: data[0], 
-        voteCount: Number(data[1]) 
+        voteCount: Number(data[1]),
+        voterHashes: hashes.map(h => h) 
       };
     }
 
@@ -88,4 +91,32 @@ app.get("/getResults", async (req, res) => {
     console.log("RESULT ERROR:", err);
     res.status(500).json({ success: false, message: "Unable to fetch results" });
   }
+});
+
+/* ---------------- FETCH VOTER HASHES FOR EACH CANDIDATE ---------------- */
+app.get("/getCandidateVoters/:id", async (req, res) => {
+  try {
+    const candidateId = parseInt(req.params.id);
+
+    const hashes = await voting.getCandidateVoters(candidateId);
+
+    // Convert bytes32[] to hex strings
+    const formatted = hashes.map(h => h);
+
+    res.json({
+      success: true,
+      candidateId,
+      voterHashes: formatted
+    });
+
+  } catch (err) {
+    console.log("HASH FETCH ERROR:", err);
+    res.status(500).json({ success: false, message: "Unable to fetch voter hashes" });
+  }
+});
+
+const PORT = process.env.PORT || 4000;
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

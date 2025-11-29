@@ -124,6 +124,10 @@ function HardwareSimulator
         'Editable','off', ...
         'FontSize',12, ...
         'Value',{'VVPAT Output:'});
+    
+    % span the full width and center align textbox
+    %vvpat.Layout.Row = 3;
+    %vvpat.Layout.Column = [1 2];
 
 
     %% ============================================================
@@ -199,7 +203,7 @@ function HardwareSimulator
             if ~exist('vvpat_logs','dir'), mkdir('vvpat_logs'); end
             writelines(slip,'vvpat_logs/vvpat_log.txt','WriteMode','append');
 
-            vvpat.Value = [vvpat.Value; "----"; slip];
+            vvpat.Value = [vvpat.Value; "----------"; slip];
             fpStatus.Text = 'Vote Recorded';
             fpStatus.FontColor = [0 0.5 0];
             btnVote.Enable = 'off';
@@ -222,15 +226,25 @@ function HardwareSimulator
 
         fields = fieldnames(resp);   % x1, x2, x3, x4, x5
         out = "Election Results:";
+        out = [out; " "];
 
         for i = 1:numel(fields)
             key = fields{i};
             cName = resp.(key).name;
             count = resp.(key).voteCount;
             out = [out; sprintf("%s: %d votes", cName, count)];
+
+            % Display voter hashes
+            hashes = resp.(key).voterHashes;
+            out = [out; "  Voters Hashes:"];
+
+            for h = 1:length(hashes)
+                out = [out; sprintf("%s", hashes{h})];
+            end
+            out = [out; " "];
         end
 
-        vvpat.Value = [vvpat.Value; "----- RESULTS -----"; out];
+        vvpat.Value = [vvpat.Value; "----------"; out];
 
     catch ME
         uialert(fig, sprintf("MATLAB ERROR:\n%s", ME.message), "Error");

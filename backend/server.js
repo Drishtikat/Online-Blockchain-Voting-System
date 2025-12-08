@@ -52,12 +52,18 @@ app.post("/recordVote", async (req, res) => {
     console.log("Recording vote:", numericVoterId, mappedCandidate);
 
     const tx = await voting.recordVote(numericVoterId, mappedCandidate);
-    await tx.wait();
+    const receipt = await tx.wait();
+
+    const event = receipt.logs
+    .map(log => voting.interface.parseLog(log))
+    .find(e => e && e.name === "Voted");
 
     return res.status(200).json({
       success: true,
       message: "Vote recorded successfully",
-      txHash: tx.hash
+      txHash: tx.hash,
+      voterHash: event.args.voterHash,
+      candidateId: mappedCandidate
     });
 
   } catch (err) {

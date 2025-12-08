@@ -146,13 +146,13 @@ function HardwareSimulator
             resp = webwrite('http://localhost:4000/verifyPUF', struct('deviceId',deviceId));
 
             if isfield(resp,'verified') && resp.verified
-                uialert(fig, 'Device Verified', 'Success');
+                uialert(fig, 'Device Verified', 'Success', 'Icon','success');
             else
-                uialert(fig, 'Device Not Verified', 'Error');
+                uialert(fig, 'Device Not Verified', 'Error', 'Icon','warning');
             end
 
         catch
-            uialert(fig, "Cannot reach server", "Network Error");
+            uialert(fig, "Cannot reach server", "Network Error", 'Icon','error');
         end
     end
 
@@ -179,41 +179,65 @@ function HardwareSimulator
 
     % ---------- Cast Vote ----------
     function castVote()
-        voterId = upper(strtrim(voterField.Value));
-        candidate = candDrop.Value;
+    voterId = upper(strtrim(voterField.Value));
+    candidate = candDrop.Value;
 
-        data.voterId     = voterId;
-        data.candidateId = candidate;
-        data.timestamp   = char(datetime('now'));
-        data.hashVoter   = matlab.net.base64encode(voterId);
-        data.hashCand    = matlab.net.base64encode(candidate);
+    % Prepare payload
+    data.voterId     = voterId;
+    data.candidateId = candidate;
+    data.timestamp   = char(datetime('now'));
 
-        try
-            options = weboptions('MediaType','application/json', ...
-                                 'RequestMethod','post', ...
-                                 'Timeout',10, ...
-                                 'CertificateFilename','');
+    try
+        options = weboptions('MediaType','application/json', ...
+                             'RequestMethod','post', ...
+                             'Timeout',10, ...
+                             'CertificateFilename','');
 
-            resp = webwrite('http://localhost:4000/recordVote', data, options);
+        % ---- SEND VOTE TO BACKEND ----
+        resp = webwrite('http://localhost:4000/recordVote', data, options);
 
-            % update UI
-            slip = sprintf("Voter: %s\nCandidate: %s\nTime: %s\n", ...
-                data.hashVoter, data.hashCand, data.timestamp);
-
-            if ~exist('vvpat_logs','dir'), mkdir('vvpat_logs'); end
-            writelines(slip,'vvpat_logs/vvpat_log.txt','WriteMode','append');
-
-            vvpat.Value = [vvpat.Value; "----------"; slip];
-            fpStatus.Text = 'Vote Recorded';
-            fpStatus.FontColor = [0 0.5 0];
-            btnVote.Enable = 'off';
-
-            uialert(fig, slip, 'VVPAT');
-
-        catch
-            uialert(fig, 'Could not send vote to server', 'Network Error');
+        % Validate response
+        if ~isfield(resp, "success") || ~resp.success
+            uialert(fig, "Vote failed to record on blockchain", "Error");
+            return;
         end
+
+        % Extract returned hashes
+        voterHash = "";
+        if isfield(resp, "voterHash")
+            voterHash = resp.voterHash;
+        end
+
+        txHash = "";
+        if isfield(resp, "txHash")
+            txHash = resp.txHash;
+        end
+
+        % ---- FORMAT VVPAT ----
+        slip = sprintf("Voter Hash: %s\nCandidate: %s\nTime: %s\nTx Hash: %s\n", ...
+                       voterHash, candidate, data.timestamp, txHash);
+
+        % Log to file
+        if ~exist('vvpat_logs','dir')
+            mkdir('vvpat_logs');
+        end
+        writelines(slip, 'vvpat_logs/vvpat_log.txt', 'WriteMode','append');
+
+        % Display in VVPAT box
+        vvpat.Value = [vvpat.Value; "----------"; slip];
+
+        % UI updates
+        fpStatus.Text = 'Vote Recorded';
+        fpStatus.FontColor = [0 0.5 0];
+        btnVote.Enable = 'off';
+
+        uialert(fig, slip, 'VVPAT', 'Icon','success');
+
+    catch ME
+        uialert(fig, sprintf("MATLAB ERROR:\n%s", ME.message), 'Error');
     end
+end
+
 
     % ---------- Fetch Results ----------
     function fetchResults()

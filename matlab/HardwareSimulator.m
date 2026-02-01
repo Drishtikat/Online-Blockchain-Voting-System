@@ -63,28 +63,41 @@ function HardwareSimulator
         'FontWeight','bold', ...
         'BackgroundColor', panelColor);
 
-    g2 = uigridlayout(bioPanel,[2 3], ...
+    g2 = uigridlayout(bioPanel,[3 3], ...
         'ColumnSpacing',10, ...
         'RowSpacing',8, ...
         'Padding',10);
 
+    %%--Row 1--
     uilabel(g2,"Text","Voter ID:", ...
-        "FontSize",labelFont,"HorizontalAlignment","right");
+        "FontSize",labelFont,...
+        "HorizontalAlignment","right");
+    
     voterField = uieditfield(g2,"text", "FontSize",labelFont);
 
     fpStatus = uilabel(g2,"Text","", ...
         "FontSize",labelFont, ...
         "FontColor",[0 0.4 0], ...
         "HorizontalAlignment","center");
-    fpStatus.Layout.Column = 3;
+    %fpStatus.Layout.Column = 3;
 
-    uilabel(g2,"Text","Fingerprint Key:", ...
-        "FontSize",labelFont,"HorizontalAlignment","right");
-    fpField = uieditfield(g2,"text", "FontSize",labelFont);
+    %%--Row 2--
+    uilabel(g2,"Text","Scan Fingerprint:", ...
+        "FontSize",labelFont,...
+        "HorizontalAlignment","right");
+    fpField = uieditfield(g2,"text",...
+        "Editable", "off", "FontSize",labelFont);
+    btnScanFP = uibutton(g2, "Text", "Upload Image",...
+        "FontSize", buttonFont,...
+        "ButtonPushedFcn", @(btn,event) uploadFingerprint());
+    btnStyle(btnScanFP);
 
+    %--Row 3--
     btnVerifyVoter = uibutton(g2,"Text","Verify Voter", ...
         "ButtonPushedFcn",@(btn,event) verifyVoter(), ...
         "FontSize",buttonFont);
+    btnVerifyVoter.Layout.Row = 3;
+    btnVerifyVoter.Layout.Column = [1 3];
     btnStyle(btnVerifyVoter);
 
 
@@ -154,6 +167,26 @@ function HardwareSimulator
         catch
             uialert(fig, "Cannot reach server", "Network Error", 'Icon','error');
         end
+    end
+
+    % ---------- Upload Image for Fingerprint ---------
+    function uploadFingerprint()
+    [file, path] = uigetfile( ...
+        {'*.png;*.jpg;*.jpeg;*.bmp','Image Files'}, ...
+        'Select Fingerprint Image');
+
+        if isequal(file,0)
+            return;
+        end
+
+        fullPath = fullfile(path, file);
+
+        % Store path in the text field
+        fpField.Value = fullPath;
+
+        % Optional status update
+        fpStatus.Text = "Fingerprint image loaded";
+        fpStatus.FontColor = [0 0.5 0];
     end
 
     % ---------- Verify Voter ----------

@@ -1,5 +1,9 @@
 const express = require("express");
+const multer = require("multer");
+const fs = require("fs");
+const crypto = require("crypto");
 const cors = require("cors");
+const path = require("path");
 const { ethers } = require("ethers");
 require("dotenv").config();
 
@@ -31,6 +35,51 @@ app.post("/verifyPUF", (req, res) => {
     return res.json({ verified: true });
   }
   return res.json({ verified: false });
+});
+
+/* ---------------- VOTER BIOMETRIC -------------- */
+const upload = multer({ dest: 'temp_uploads/' });
+
+function getFileHash(filePath) {
+    const fileBuffer = fs.readFileSync(filePath);
+    return crypto.createHash('sha256').update(fileBuffer).digest('hex');
+}
+
+app.post('/verify-fingerprint', upload.single('fingerprint'), (req, res) => {
+    console.log("POST /verify-fingerprint HIT");
+    try {
+        const voterId = req.body.voterId;  
+        const uploadedFilePath = req.file.path;
+
+        // Path to stored fingerprint
+        const storedFilePath = path.join(
+            __dirname,
+            '..',
+            'dataset',
+            'real_data',
+            `${voterId}.bmp`
+        );
+
+        if (!fs.existsSync(storedFilePath)) {
+            fs.unlinkSync(uploadedFilePath);
+            return res.json({ verified: false, message: "Voter not found" });
+        }
+
+        const uploadedHash = getFileHash(uploadedFilePath);
+        const storedHash   = getFileHash(storedFilePath);
+
+        fs.unlinkSync(uploadedFilePath);
+
+        if (uploadedHash === storedHash) {
+            return res.json({ verified: true });
+        } else {
+            return res.json({ verified: false, message: "Fingerprint mismatch" });
+        }
+
+    } catch (err) {
+        console.log("FINGERPRINT ERROR:", err);
+        return res.status(500).json({ verified: false, message: "Server error" });
+    }
 });
 
 /* ---------------- RECORD VOTE ---------------- */

@@ -146,7 +146,9 @@ function HardwareSimulator
     %% ============================================================
     %  SIMULATED DATABASE
     %% ============================================================
-    voterDB = struct('V1001','1','V1002','2','V1003','3','V1004','4','V1005','5');
+    voterDB = struct('V1001','1','V1002','2','V1003','3','V1004','4', ...
+        'V1005','5', 'V1006', '6', 'V1007', '7', 'V1008', '8', 'V1009', ...
+        '9', 'V1010', '10');
 
 
     %% ============================================================
@@ -191,22 +193,56 @@ function HardwareSimulator
 
     % ---------- Verify Voter ----------
     function verifyVoter()
+
         voterId = upper(strtrim(voterField.Value));
-        fp      = strtrim(fpField.Value);
+        fpPath  = strtrim(fpField.Value);
         btnVote.Enable = 'off';
 
-        if isfield(voterDB, voterId)
-            if strcmp(voterDB.(voterId), fp)
-                fpStatus.Text = ['Authentication Successful: ', voterId];
+        if isempty(voterId) || isempty(fpPath)
+            fpStatus.Text = "Enter Voter ID and upload fingerprint";
+            fpStatus.FontColor = [0.8 0 0];
+            return;
+        end
+
+        try
+            import matlab.net.*
+            import matlab.net.http.*
+            import matlab.net.http.io.*
+
+            % Create multipart form
+            mp = MultipartFormProvider( ...
+                'voterId', voterId, ...
+                'fingerprint', FileProvider(fpPath));
+
+            % Create POST request
+            req = RequestMessage('POST');
+            req.Body = mp;  
+
+            % Send
+            uri = URI('http://localhost:4000/verify-fingerprint');
+            resp = send(req, uri);
+
+            raw = resp.Body.Data;
+
+            if ischar(raw) || isstring(raw)
+                result = jsondecode(char(raw));
+            else
+                result = raw;
+            end
+
+            if result.verified
+                fpStatus.Text = "Authentication Successful";
                 fpStatus.FontColor = [0 0.5 0];
                 btnVote.Enable = 'on';
             else
-                fpStatus.Text = 'Fingerprint mismatch';
+                fpStatus.Text = result.message;
                 fpStatus.FontColor = [0.8 0 0];
             end
-        else
-            fpStatus.Text = ['Unknown ID: ', voterId];
+
+        catch ME
+            fpStatus.Text = "Server error";
             fpStatus.FontColor = [0.8 0 0];
+            disp(ME.message);
         end
     end
 
